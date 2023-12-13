@@ -3,6 +3,8 @@ An Android application in Kotlin for job search, leveraging the HeadHunter API f
 
 Developed as graduation project on Yandex.Practicum.
 
+[Click to download "Job Seeker"](https://github.com/JudjinGM/JobSeeker/releases/download/beta_v1.0/JobSeeker.apk)
+
 ## Device requirements
 Compatible from Android 8 (Android API 26)
 
