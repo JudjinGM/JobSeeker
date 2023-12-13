@@ -8,23 +8,18 @@ import ru.practicum.android.diploma.favorites.domain.repository.FavoritesReposit
 class FavoritesRepositoryImpl(
     private val favoritesLocalDataSource: FavoritesLocalDataSource,
 ) : FavoritesRepository {
-    override suspend fun addToFavorites(vacancy: Vacancy) {
+    override suspend fun addToFavorites(vacancy: Vacancy) =
         favoritesLocalDataSource.addToFavorites(vacancy)
-    }
 
-    override suspend fun deleteFromFavorites(vacancy: Vacancy) {
+    override suspend fun deleteFromFavorites(vacancy: Vacancy) =
         favoritesLocalDataSource.deleteFromFavorites(vacancy)
-    }
 
-    override fun getFavorites(): Flow<List<Vacancy>> {
-        return favoritesLocalDataSource.getFavorites()
-    }
+    override fun getFavorites(): Flow<List<Vacancy>> =
+        favoritesLocalDataSource.getFavorites()
 
-    override suspend fun getVacancy(id: Int): Vacancy {
-        return favoritesLocalDataSource.getVacancy(id)
-    }
+    override suspend fun getVacancy(id: Int): Vacancy =
+        favoritesLocalDataSource.getVacancy(id)
 
-    override suspend fun isVacancyContainsFlow(id: Int): Flow<Boolean> {
-        return favoritesLocalDataSource.isVacancyContainsFlow(id)
-    }
+    override suspend fun isVacancyContainsFlow(id: Int): Flow<Boolean> =
+        favoritesLocalDataSource.isVacancyContainsFlow(id)
 }

@@ -42,16 +42,6 @@ class SimilarVacancyFragment : SearchFragment() {
         viewModel.observeState().observe(viewLifecycleOwner) {
             renderSearchState(it)
         }
-
-        viewModel.observeErrorToastState().observe(viewLifecycleOwner) {
-            renderErrorState(it)
-        }
-
-        viewModel.observePaginationLoadingState().observe(viewLifecycleOwner) {
-            renderPaginationLoadingState(it)
-        }
-
-        isClickAllowed = true
     }
 
     override fun destroyViews() {
@@ -62,13 +52,7 @@ class SimilarVacancyFragment : SearchFragment() {
 
     override fun recycleViewInit() {
         vacanciesAdapter = RecycleViewVacancyAdapter { vacancy ->
-            if (isClickDebounce()) {
-                val direction =
-                    SimilarVacancyFragmentDirections.actionSimilarVacancyFragmentToVacancyFragment(
-                        vacancy.id
-                    )
-                findNavController().navigate(direction)
-            }
+            viewModel.vacancyClicked(vacancyId = vacancy.id)
         }
 
         binding.similarVacanciesRecyclerView.layoutManager =
@@ -76,22 +60,32 @@ class SimilarVacancyFragment : SearchFragment() {
         binding.similarVacanciesRecyclerView.adapter = vacanciesAdapter
     }
 
+    override fun navigateToVacancy(vacancyId: Int) {
+        val direction =
+            SimilarVacancyFragmentDirections.actionSimilarVacancyFragmentToVacancyFragment(vacancyId)
+        findNavController().navigate(direction)
+    }
+
     override fun showErrorToast(message: String) {
         showToast(message)
         binding.similarVacancyScreenPaginationProgressBar.isVisible = false
     }
 
-    override fun showContent(vacancies: List<VacancyUi>, foundVacancies: Int) {
+    override fun showContent(
+        vacancies: List<VacancyUi>,
+        foundVacancies: Int,
+        isFilterExist: Boolean
+    ) {
         emptyScreen()
         vacanciesAdapter?.items = vacancies
     }
 
-    override fun showEmpty() {
+    override fun showEmpty(isFilterExist: Boolean) {
         emptyScreen()
         vacanciesAdapter?.items = listOf()
     }
 
-    override fun showLoadingSearch() {
+    override fun showLoadingSearch(isFilterExist: Boolean) {
         emptyScreen()
         vacanciesAdapter?.items = listOf()
         binding.similarVacanciesScreenFirstLoadingProgressBar.isVisible = true
@@ -101,11 +95,7 @@ class SimilarVacancyFragment : SearchFragment() {
         binding.similarVacancyScreenPaginationProgressBar.isVisible = true
     }
 
-    override fun hideLoadingPages() {
-        binding.similarVacancyScreenPaginationProgressBar.isVisible = false
-    }
-
-    override fun showError(errorStatus: ErrorStatusUi) {
+    override fun showError(errorStatus: ErrorStatusUi, isFilterExist: Boolean) {
         when (errorStatus) {
             ErrorStatusUi.NO_CONNECTION -> {
                 emptyScreen()

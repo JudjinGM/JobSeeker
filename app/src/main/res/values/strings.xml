@@ -44,6 +44,15 @@
     <string name="apply">Применить</string>
     <string name="reset">Сбросить</string>
 
+    <string name="location">Узнать местоположение</string>
+    <string name="location_permission">Для доступа к местоположению, перейдите в настройки и дайте доступ к местоположению </string>
+    <string name="location_title">Ошибка получение местоположения </string>
+    <string name="location_procced">Перейти в настройки </string>
+    <string name="location_denied">Назад </string>
+    <string name="location_error">Невозможно получить ваше местоположение</string>
+
+
+
     <string name="required_experience">Требуемый опыт</string>
     <string name="vacancy_description">Описание вакансии</string>
     <string name="duties">Обязанности</string>

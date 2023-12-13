@@ -10,49 +10,27 @@ import ru.practicum.android.diploma.filter.data.db.FilterLocalCache
 class FiltersLocalDataSourceImpl(
     private val filterLocalCache: FilterLocalCache
 ) : FiltersLocalDataSource {
-    override fun getFilterOptions(): Filter? {
-        return filterLocalCache.getFilterCache()
-    }
+    override fun getFilterOptions(): Filter? = filterLocalCache.getFilterCache()
 
-    override fun setCountry(country: CountryFilter) {
-        filterLocalCache.addCountry(country)
-    }
+    override fun setCountry(country: CountryFilter) = filterLocalCache.addCountry(country)
 
-    override fun setArea(area: AreaFilter?) {
-        filterLocalCache.addArea(area)
-    }
+    override fun setArea(area: AreaFilter?) = filterLocalCache.addArea(area)
 
-    override fun setIndustry(industry: IndustryFilter) {
-        filterLocalCache.addIndustry(industry)
-    }
+    override fun setIndustry(industry: IndustryFilter) = filterLocalCache.addIndustry(industry)
 
-    override fun setSalary(salary: Int) {
-        filterLocalCache.addSalary(salary)
-    }
+    override fun setSalary(salary: Int) = filterLocalCache.addSalary(salary)
 
-    override fun setOnlyWithSalary(option: Boolean) {
-        filterLocalCache.addOnlyWithSalary(option)
-    }
+    override fun setOnlyWithSalary(option: Boolean) = filterLocalCache.addOnlyWithSalary(option)
 
-    override fun clearFilterOptions() {
-        filterLocalCache.clearAll()
-    }
+    override fun clearFilterOptions() = filterLocalCache.clearAll()
 
-    override fun clearArea() {
-        filterLocalCache.clearArea()
-    }
+    override fun clearArea() = filterLocalCache.clearArea()
 
-    override fun clearIndustry() {
-        filterLocalCache.clearIndustry()
-    }
+    override fun clearIndustry() = filterLocalCache.clearIndustry()
 
-    override fun clearSalary() {
-        filterLocalCache.clearSalary()
-    }
+    override fun clearSalary() = filterLocalCache.clearSalary()
 
-    override fun clearTempFilterOptions() {
-        filterLocalCache.clearAll()
-    }
+    override fun clearTempFilterOptions() = filterLocalCache.clearAll()
 
     override fun isTempFilterOptionsEmpty(): Boolean {
         val filter = filterLocalCache.getFilterCache()
@@ -63,11 +41,7 @@ class FiltersLocalDataSourceImpl(
         }
     }
 
-    override fun addFilterToCache(filter: Filter?) {
-        filterLocalCache.addFilterToCache(filter)
-    }
+    override fun addFilterToCache(filter: Filter?) = filterLocalCache.addFilterToCache(filter)
 
-    override fun isTempFilterOptionsExists(): Boolean {
-        return filterLocalCache.getFilterCache() != null
-    }
+    override fun isTempFilterOptionsExists(): Boolean = filterLocalCache.getFilterCache() != null
 }

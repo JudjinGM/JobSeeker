@@ -1,7 +1,6 @@
 package ru.practicum.android.diploma.filter.ui.fragment
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,12 +9,11 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.practicum.android.diploma.R
-import ru.practicum.android.diploma.common.custom_view.model.ButtonWithSelectedValuesState
+import ru.practicum.android.diploma.common.custom_view.model.ButtonWithSelectedValuesTextState
 import ru.practicum.android.diploma.common.domain.model.filter_models.AreaFilter
 import ru.practicum.android.diploma.common.domain.model.filter_models.CountryFilter
 import ru.practicum.android.diploma.databinding.FragmentFilteringChoosingWorkplaceBinding
-import ru.practicum.android.diploma.filter.ui.model.ButtonState
-import ru.practicum.android.diploma.filter.ui.model.FilterFieldsState
+import ru.practicum.android.diploma.filter.ui.model.ChoosingWorkplaceState
 import ru.practicum.android.diploma.filter.ui.viewModel.FilteringChoosingWorkplaceViewModel
 
 class FilteringChoosingWorkplaceFragment : Fragment() {
@@ -23,9 +21,6 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
     private val viewModel by viewModel<FilteringChoosingWorkplaceViewModel>()
     private var _binding: FragmentFilteringChoosingWorkplaceBinding? = null
     private val binding get() = _binding!!
-    private var emptyCountryField = true
-    private var emptyAreaField = true
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -37,14 +32,10 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.countryState.observe(viewLifecycleOwner) {
-            renderCountryState(it)
-        }
-        viewModel.regionState.observe(viewLifecycleOwner) {
-            renderRegionState(it)
-        }
-        viewModel.selectButtonState.observe(viewLifecycleOwner) {
-            renderSelectButtonState(it)
+        viewModel.initializeChoosingWorkplace()
+
+        viewModel.state.observe(viewLifecycleOwner) {
+            render(it)
         }
 
         setOnClickListeners()
@@ -58,19 +49,18 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
 
     private fun setOnFragmentResultListener() {
         setFragmentResultListener(REQUEST_KEY) { _, bundle ->
-            val country = bundle.get(BUNDLE_KEY_FOR_COUNTRY) as CountryFilter?
-            val area = bundle.get(BUNDLE_KEY_FOR_AREA) as AreaFilter?
+            val country = bundle.getParcelable(BUNDLE_KEY_FOR_COUNTRY) as CountryFilter?
+            val area = bundle.getParcelable(BUNDLE_KEY_FOR_AREA) as AreaFilter?
+
             if (country != null) {
-                viewModel.updateCountryField(country)
-                viewModel.updateAreaField(null)
+                viewModel.updateCountryFilter(country)
             }
             if (area != null) {
-                viewModel.updateAreaField(area)
-                viewModel.updateCountryField(
+                viewModel.updateCountryAndAreaFilter(
                     CountryFilter(
                         id = area.countryId,
                         name = area.countryName
-                    )
+                    ), area
                 )
             }
         }
@@ -78,42 +68,68 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
 
     private fun setOnClickListeners() {
         binding.choosingWorkplaceToolbar.setNavigationOnClickListener {
-            findNavController().popBackStack()
+            viewModel.backButtonClicked()
         }
 
         binding.choosingWorkplaceCountryCustomView.setOnClickListener {
-            navigateToCountrySelection()
+            viewModel.countryFieldClicked()
         }
 
         binding.choosingWorkplaceAreaCustomView.setOnClickListener {
-            navigateToAreaSelection()
+            viewModel.areaFieldClicked()
         }
 
         binding.choosingWorkplaceSelectButtonTextView.setOnClickListener {
-            viewModel.addCountryFilter()
-            viewModel.addAreaFilter()
-            findNavController().popBackStack()
+            viewModel.selectButtonClicked()
         }
 
-        binding.choosingWorkplaceCountryCustomView.onButtonClick {
-            if (emptyCountryField) {
+        binding.choosingWorkplaceCountryCustomView.onIconButtonClick {
+            viewModel.countryButtonClicked()
+        }
+
+        binding.choosingWorkplaceAreaCustomView.onIconButtonClick {
+            viewModel.areaButtonClicked()
+        }
+    }
+
+    private fun render(state: ChoosingWorkplaceState) {
+        when (state) {
+            is ChoosingWorkplaceState.EmptyCountryEmptyArea -> {
+                renderCountryEmpty()
+                renderAreaEmpty()
+                binding.choosingWorkplaceSelectButtonTextView.visibility = View.GONE
+            }
+
+            is ChoosingWorkplaceState.ContentCountryEmptyArea -> {
+                renderCountryContent(state.country)
+                renderAreaEmpty()
+                binding.choosingWorkplaceSelectButtonTextView.visibility = View.VISIBLE
+            }
+
+            is ChoosingWorkplaceState.EmptyCountryContentArea -> {
+                renderCountryEmpty()
+                renderAreaContent(state.area)
+                binding.choosingWorkplaceSelectButtonTextView.visibility = View.VISIBLE
+            }
+
+            is ChoosingWorkplaceState.ContentCountryContentArea -> {
+                renderCountryContent(state.country)
+                renderAreaContent(state.area)
+                binding.choosingWorkplaceSelectButtonTextView.visibility = View.VISIBLE
+            }
+
+            is ChoosingWorkplaceState.Navigate.NavigateToArea -> {
+                navigateToAreaSelection(state.countryId)
+            }
+
+            is ChoosingWorkplaceState.Navigate.NavigateToCountry -> {
                 navigateToCountrySelection()
-            } else {
-                viewModel.updateCountryField(null)
-                viewModel.updateAreaField(null)
-                viewModel.updateSelectButton()
+            }
+
+            is ChoosingWorkplaceState.Navigate.NavigateBack -> {
+                findNavController().popBackStack()
             }
         }
-
-        binding.choosingWorkplaceAreaCustomView.onButtonClick {
-            if (emptyAreaField) {
-                navigateToAreaSelection()
-            } else {
-                viewModel.updateAreaField(null)
-                viewModel.updateSelectButton()
-            }
-        }
-
     }
 
     private fun navigateToCountrySelection() {
@@ -122,79 +138,44 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
         findNavController().navigate(direction)
     }
 
-    private fun navigateToAreaSelection() {
-        val countryFilter = viewModel.countryFilter
-        val countryFilterId = countryFilter?.id?.toString()
+    private fun navigateToAreaSelection(countryId: String?) {
         val direction =
             FilteringChoosingWorkplaceFragmentDirections.actionFilteringChoosingWorkplaceFragmentToFilteringRegionFragment(
-                countryFilterId
+                countryId
             )
         findNavController().navigate(direction)
     }
 
-    private fun renderCountryState(state: FilterFieldsState) {
-        when (state) {
-            is FilterFieldsState.Empty -> {
-                binding.choosingWorkplaceCountryCustomView.render(
-                    ButtonWithSelectedValuesState.Empty(
-                        getString(
-                            R.string.country
-                        )
-                    )
-                )
-                emptyCountryField = true
-            }
-
-            is FilterFieldsState.Content -> {
-                binding.choosingWorkplaceCountryCustomView.render(
-                    ButtonWithSelectedValuesState.Content(
-                        state.text, getString(
-                            R.string.country
-                        )
-                    )
-                )
-                emptyCountryField = false
-            }
-        }
-        viewModel.updateSelectButton()
+    private fun renderCountryEmpty() {
+        binding.choosingWorkplaceCountryCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Empty(
+                getString(R.string.country)
+            )
+        )
     }
 
-    private fun renderRegionState(state: FilterFieldsState) {
-        when (state) {
-            is FilterFieldsState.Empty -> {
-                binding.choosingWorkplaceAreaCustomView.render(
-                    ButtonWithSelectedValuesState.Empty(
-                        getString(
-                            R.string.region
-                        )
-                    )
-                )
-                emptyAreaField = true
-            }
-
-            is FilterFieldsState.Content -> {
-                binding.choosingWorkplaceAreaCustomView.render(
-                    ButtonWithSelectedValuesState.Content(
-                        state.text, getString(
-                            R.string.region
-                        )
-                    )
-                )
-                emptyAreaField = false
-            }
-        }
-        viewModel.updateSelectButton()
+    private fun renderCountryContent(country: String) {
+        binding.choosingWorkplaceCountryCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Content(
+                country, getString(R.string.country)
+            )
+        )
     }
 
-    private fun renderSelectButtonState(state: ButtonState) {
-        when (state) {
-            is ButtonState.Visible -> {
-                binding.choosingWorkplaceSelectButtonTextView.visibility = View.VISIBLE
-            }
-            is ButtonState.Gone -> {
-                binding.choosingWorkplaceSelectButtonTextView.visibility = View.GONE
-            }
-        }
+    private fun renderAreaEmpty() {
+        binding.choosingWorkplaceAreaCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Empty(
+                getString(R.string.region)
+            )
+        )
+    }
+
+    private fun renderAreaContent(area: String) {
+        binding.choosingWorkplaceAreaCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Content(
+                area, getString(R.string.region)
+            )
+        )
     }
 
     companion object {

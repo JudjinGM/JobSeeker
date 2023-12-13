@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
@@ -58,9 +57,11 @@ class FilteringCountryFragment : Fragment() {
     private fun setOnBackClickListeners() {
 
         binding.filteringCountryToolbar.setNavigationOnClickListener {
+            val bundle = Bundle()
+            bundle.putParcelable(BUNDLE_KEY_FOR_COUNTRY, null)
             setFragmentResult(
                 REQUEST_KEY,
-                bundleOf(BUNDLE_KEY_FOR_COUNTRY to null)
+                bundle
             )
             findNavController().popBackStack()
         }
@@ -69,9 +70,11 @@ class FilteringCountryFragment : Fragment() {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
+                    val bundle = Bundle()
+                    bundle.putParcelable(BUNDLE_KEY_FOR_COUNTRY, null)
                     setFragmentResult(
                         REQUEST_KEY,
-                        bundleOf(BUNDLE_KEY_FOR_COUNTRY to null)
+                        bundle
                     )
                     findNavController().popBackStack()
                 }
@@ -82,9 +85,11 @@ class FilteringCountryFragment : Fragment() {
     private fun recyclerViewInit() {
         countriesAdapter = RecycleViewAreaAdapter {
             val item = it
+            val bundle = Bundle()
+            bundle.putParcelable(BUNDLE_KEY_FOR_COUNTRY, CountryFilter(item.id, item.name))
             setFragmentResult(
                 REQUEST_KEY,
-                bundleOf(BUNDLE_KEY_FOR_COUNTRY to CountryFilter(item.id, item.name))
+                bundle
             )
             findNavController().popBackStack()
         }

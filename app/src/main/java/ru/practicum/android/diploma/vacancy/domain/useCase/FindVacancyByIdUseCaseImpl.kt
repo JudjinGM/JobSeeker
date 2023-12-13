@@ -7,9 +7,8 @@ import ru.practicum.android.diploma.vacancy.domain.model.VacancyOrError
 import ru.practicum.android.diploma.vacancy.domain.repository.VacancyRepository
 
 class FindVacancyByIdUseCaseImpl(
-    private val repository: VacancyRepository,
-) :
-    FindVacancyByIdUseCase {
+    private val repository: VacancyRepository
+) : FindVacancyByIdUseCase {
     override suspend fun findVacancyById(vacancyId: Int): VacancyOrError {
         when (val result = repository.findVacancyById(vacancyId)) {
             is Resource.Success -> {

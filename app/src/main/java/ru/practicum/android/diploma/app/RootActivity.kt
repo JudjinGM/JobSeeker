@@ -28,22 +28,23 @@ class RootActivity : AppCompatActivity() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.vacancyFragment, R.id.filteringSettingsFragment, R.id.similarVacancyFragment,
-                R.id.filteringChoosingWorkplaceFragment, R.id.filteringCountryFragment, R.id.filteringRegionFragment, R.id.filteringSectorFragment -> {
-                    if (binding.navigationView.visibility == View.VISIBLE) {
-                        binding.navigationView.animation = AnimationUtils.loadAnimation(this, R.anim.slide_out_down)
-                        binding.navigationView.animate()
-                        binding.navigationView.visibility = View.GONE
-                        binding.divider.visibility = View.GONE
-                    }
-                }
-
-                else -> {
+                R.id.searchFragment,
+                R.id.favoritesFragment,
+                R.id.teamFragment -> {
                     if (binding.navigationView.visibility == View.GONE) {
                         binding.navigationView.visibility = View.VISIBLE
                         binding.divider.visibility = View.VISIBLE
                         binding.navigationView.animation = AnimationUtils.loadAnimation(this, R.anim.slide_in_up)
                         binding.navigationView.animate()
+                    }
+                }
+
+                else -> {
+                    if (binding.navigationView.visibility == View.VISIBLE) {
+                        binding.navigationView.animation = AnimationUtils.loadAnimation(this, R.anim.slide_out_down)
+                        binding.navigationView.animate()
+                        binding.navigationView.visibility = View.GONE
+                        binding.divider.visibility = View.GONE
                     }
                 }
             }

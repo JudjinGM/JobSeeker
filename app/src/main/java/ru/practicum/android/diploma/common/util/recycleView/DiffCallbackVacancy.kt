@@ -10,9 +10,7 @@ class DiffCallbackVacancy(
         return oldList.size
     }
 
-    override fun getNewListSize(): Int {
-        return newList.size
-    }
+    override fun getNewListSize(): Int = newList.size
 
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         val old = oldList[oldItemPosition]

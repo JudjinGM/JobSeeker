@@ -6,15 +6,9 @@ import ru.practicum.android.diploma.filter.data.db.FilterDataBase
 
 class FiltersLocalStorageDataSourceImpl(private val filterDataBase: FilterDataBase) :
     FiltersLocalStorageDataSource {
-    override fun getFilterOptions(): Filter? {
-        return filterDataBase.getFilterOptions()
-    }
+    override fun getFilterOptions(): Filter? = filterDataBase.getFilterOptions()
 
-    override fun setFilterOptions(filters: Filter) {
-        filterDataBase.putFilterOptions(filters)
-    }
+    override fun setFilterOptions(filters: Filter) = filterDataBase.putFilterOptions(filters)
 
-    override fun clearFilterOptions() {
-        filterDataBase.clearSavedFilter()
-    }
+    override fun clearFilterOptions() = filterDataBase.clearSavedFilter()
 }

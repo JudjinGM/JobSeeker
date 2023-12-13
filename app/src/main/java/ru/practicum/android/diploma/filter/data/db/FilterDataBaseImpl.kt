@@ -16,11 +16,8 @@ class FilterDataBaseImpl(private val sharedPrefs: SharedPreferences) : FilterDat
         }
     }
 
-    override fun putFilterOptions(filter: Filter) {
+    override fun putFilterOptions(filter: Filter) =
         sharedPrefs.edit().putString(FILTER, Gson().toJson(filter)).apply()
-    }
 
-    override fun clearSavedFilter() {
-        sharedPrefs.edit().clear().apply()
-    }
+    override fun clearSavedFilter() = sharedPrefs.edit().clear().apply()
 }

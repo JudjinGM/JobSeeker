@@ -26,9 +26,7 @@ class RecycleViewContactsAdapter(
         )
     }
 
-    override fun getItemCount(): Int {
-        return items.size
-    }
+    override fun getItemCount(): Int = items.size
 
     override fun onBindViewHolder(holder: ContactsPhoneViewHolder, position: Int) {
         holder.bind(items[position])

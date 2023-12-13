@@ -13,6 +13,8 @@ import ru.practicum.android.diploma.filter.domain.useCase.ClearSalaryFilterUseCa
 import ru.practicum.android.diploma.filter.domain.useCase.ClearSalaryFilterUseCaseImpl
 import ru.practicum.android.diploma.filter.domain.useCase.ClearTempFilterOptionsUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.ClearTempFilterOptionsUseCaseImpl
+import ru.practicum.android.diploma.filter.domain.useCase.GetAreaFromGeocoderUseCase
+import ru.practicum.android.diploma.filter.domain.useCase.GetAreaFromGeocoderUseCaseImpl
 import ru.practicum.android.diploma.filter.domain.useCase.GetAreasUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.GetAreasUseCaseImpl
 import ru.practicum.android.diploma.filter.domain.useCase.GetChosenAreaUseCase
@@ -45,6 +47,8 @@ import ru.practicum.android.diploma.filter.domain.useCase.SetOnlyWithSalaryFilte
 import ru.practicum.android.diploma.filter.domain.useCase.SetOnlyWithSalaryFilterUseCaseImpl
 import ru.practicum.android.diploma.filter.domain.useCase.SetSalaryFilterUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.SetSalaryFilterUseCaseImpl
+import ru.practicum.android.diploma.vacancy.domain.useCase.OpenAppsSettingsUseCase
+import ru.practicum.android.diploma.vacancy.domain.useCase.OpenAppsSettingsUseCaseImpl
 
 val filterDomainModule = module {
     factoryOf(::SetAreaFilterUseCaseImpl) bind SetAreaFilterUseCase::class
@@ -68,4 +72,6 @@ val filterDomainModule = module {
     factoryOf(::GetChosenCountryUseCaseImpl) bind GetChosenCountryUseCase::class
     factoryOf(::GetChosenIndustryUseCaseImpl) bind GetChosenIndustryUseCase::class
     factoryOf(::GetChosenAreaUseCaseImpl) bind GetChosenAreaUseCase::class
+    factoryOf(::GetAreaFromGeocoderUseCaseImpl) bind GetAreaFromGeocoderUseCase::class
+    factoryOf(::OpenAppsSettingsUseCaseImpl) bind OpenAppsSettingsUseCase::class
 }

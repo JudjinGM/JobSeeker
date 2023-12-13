@@ -30,9 +30,7 @@ class RecycleViewIndustryAdapter(
         )
     }
 
-    override fun getItemCount(): Int {
-        return items.size
-    }
+    override fun getItemCount(): Int  = items.size
 
     override fun onBindViewHolder(holder: IndustryViewHolder, position: Int) {
         holder.bind(items[position])

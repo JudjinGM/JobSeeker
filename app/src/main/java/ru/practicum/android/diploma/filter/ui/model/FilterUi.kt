@@ -1,6 +1,6 @@
 package ru.practicum.android.diploma.filter.ui.model
 
-class FilterUi(
+data class FilterUi(
     val countryName: String = "",
     val areaName: String = "",
     val industryName: String = "",
