@@ -9,7 +9,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.practicum.android.diploma.R
-import ru.practicum.android.diploma.common.custom_view.model.ButtonWithSelectedValuesState
+import ru.practicum.android.diploma.common.custom_view.model.ButtonWithSelectedValuesTextState
 import ru.practicum.android.diploma.common.domain.model.filter_models.AreaFilter
 import ru.practicum.android.diploma.common.domain.model.filter_models.CountryFilter
 import ru.practicum.android.diploma.databinding.FragmentFilteringChoosingWorkplaceBinding
@@ -83,11 +83,11 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
             viewModel.selectButtonClicked()
         }
 
-        binding.choosingWorkplaceCountryCustomView.onButtonClick {
+        binding.choosingWorkplaceCountryCustomView.onIconButtonClick {
             viewModel.countryButtonClicked()
         }
 
-        binding.choosingWorkplaceAreaCustomView.onButtonClick {
+        binding.choosingWorkplaceAreaCustomView.onIconButtonClick {
             viewModel.areaButtonClicked()
         }
     }
@@ -147,32 +147,32 @@ class FilteringChoosingWorkplaceFragment : Fragment() {
     }
 
     private fun renderCountryEmpty() {
-        binding.choosingWorkplaceCountryCustomView.render(
-            ButtonWithSelectedValuesState.Empty(
+        binding.choosingWorkplaceCountryCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Empty(
                 getString(R.string.country)
             )
         )
     }
 
     private fun renderCountryContent(country: String) {
-        binding.choosingWorkplaceCountryCustomView.render(
-            ButtonWithSelectedValuesState.Content(
+        binding.choosingWorkplaceCountryCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Content(
                 country, getString(R.string.country)
             )
         )
     }
 
     private fun renderAreaEmpty() {
-        binding.choosingWorkplaceAreaCustomView.render(
-            ButtonWithSelectedValuesState.Empty(
+        binding.choosingWorkplaceAreaCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Empty(
                 getString(R.string.region)
             )
         )
     }
 
     private fun renderAreaContent(area: String) {
-        binding.choosingWorkplaceAreaCustomView.render(
-            ButtonWithSelectedValuesState.Content(
+        binding.choosingWorkplaceAreaCustomView.renderTextState(
+            ButtonWithSelectedValuesTextState.Content(
                 area, getString(R.string.region)
             )
         )

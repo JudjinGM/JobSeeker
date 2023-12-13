@@ -3,6 +3,7 @@ package ru.practicum.android.diploma.vacancy.ui.navigator
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import android.widget.Toast
 import ru.practicum.android.diploma.R
 import ru.practicum.android.diploma.vacancy.domain.repository.ExternalNavigator
@@ -35,6 +36,16 @@ class ExternalNavigatorImpl(private val context: Context) : ExternalNavigator {
         startActivityOrShowError(intent)
     }
 
+    override fun openAppsSettings() {
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts(
+                PACKAGE, context.packageName, null
+            )
+        )
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    }
+
     private fun startActivityOrShowError(intent: Intent) {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         try {
@@ -46,5 +57,9 @@ class ExternalNavigatorImpl(private val context: Context) : ExternalNavigator {
                 Toast.LENGTH_SHORT
             ).show()
         }
+    }
+
+    companion object {
+        const val PACKAGE = "package"
     }
 }

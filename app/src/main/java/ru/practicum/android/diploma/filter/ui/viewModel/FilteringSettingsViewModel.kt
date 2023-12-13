@@ -4,14 +4,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.practicum.android.diploma.common.domain.model.filter_models.Filter
+import ru.practicum.android.diploma.filter.domain.model.MyLocation
 import ru.practicum.android.diploma.filter.domain.useCase.ClearAreaFilterUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.ClearFilterOptionsUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.ClearIndustryFilterUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.ClearSalaryFilterUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.ClearTempFilterOptionsUseCase
+import ru.practicum.android.diploma.filter.domain.useCase.GetAreaFromGeocoderUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.GetFilterOptionsUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.IsTempFilterOptionsEmptyUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.IsTempFilterOptionsExistsUseCase
@@ -22,7 +25,12 @@ import ru.practicum.android.diploma.filter.domain.useCase.SetIndustryFilterUseCa
 import ru.practicum.android.diploma.filter.domain.useCase.SetOnlyWithSalaryFilterUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.SetSalaryFilterUseCase
 import ru.practicum.android.diploma.filter.ui.mapper.FilterDomainToFilterUiConverter
+import ru.practicum.android.diploma.filter.ui.model.DialogState
 import ru.practicum.android.diploma.filter.ui.model.FilterSettingsState
+import ru.practicum.android.diploma.filter.ui.model.LocationState
+import ru.practicum.android.diploma.search.domain.model.ErrorStatusDomain
+import ru.practicum.android.diploma.search.ui.model.SingleLiveEvent
+import ru.practicum.android.diploma.vacancy.domain.useCase.OpenAppsSettingsUseCase
 
 class FilteringSettingsViewModel(
     private val getFilterOptionsUseCase: GetFilterOptionsUseCase,
@@ -39,10 +47,17 @@ class FilteringSettingsViewModel(
     private val clearTempFilterOptionsUseCase: ClearTempFilterOptionsUseCase,
     private val isTempFilterOptionsEmptyUseCase: IsTempFilterOptionsEmptyUseCase,
     private val isTempFilterOptionsExistsUseCase: IsTempFilterOptionsExistsUseCase,
-    private val filterDomainToFilterUiConverter: FilterDomainToFilterUiConverter
+    private val filterDomainToFilterUiConverter: FilterDomainToFilterUiConverter,
+    private val getAreaFromGeocoderUseCase: GetAreaFromGeocoderUseCase,
+    private val openAppsSettingsUseCase: OpenAppsSettingsUseCase
+
 ) : ViewModel() {
 
     private val stateLiveData = MutableLiveData<FilterSettingsState>()
+
+    private val dialogState = SingleLiveEvent<DialogState>()
+    private val locationState = MutableLiveData<LocationState>(LocationState.Empty)
+
 
     private var isFiltersSetBefore: Boolean = false
     private var isResetButtonClicked: Boolean = false
@@ -52,12 +67,19 @@ class FilteringSettingsViewModel(
     var salary: String = BLANK_STRING
     private var currentState: FilterSettingsState.Content? = null
 
+
     private var isClickAllowed = true
 
+    private val coroutineExceptionHandler =
+        CoroutineExceptionHandler { _, _ -> locationState.value = LocationState.Error }
     init {
         filter = getFilterOptionsUseCase.execute()
         isFiltersSetBefore = filter != null
     }
+
+    fun observeDialogState(): LiveData<DialogState> = dialogState
+
+    fun observeLocationState(): LiveData<LocationState> = locationState
 
     fun observeStateLiveData(): LiveData<FilterSettingsState> = stateLiveData
 
@@ -98,6 +120,8 @@ class FilteringSettingsViewModel(
 
         currentState = currentState?.copy(isItInitSalaryField = false)
         currentState = currentState?.copy(isItInitOnlySalary = false)
+
+        locationState.value = LocationState.Empty
     }
 
     private fun updateButtonsStates() {
@@ -243,6 +267,53 @@ class FilteringSettingsViewModel(
 
     private fun clearTempFilterOptions() {
         clearTempFilterOptionsUseCase.execute()
+    }
+
+    fun getFilterFromGeocoder(coordinates: String) {
+        viewModelScope.launch(coroutineExceptionHandler) {
+            getAreaFromGeocoderUseCase.execute(coordinates).collect {
+                proceedGeocoderResult(it.first, it.second)
+            }
+        }
+    }
+
+    fun getLocation() {
+        locationState.value = LocationState.Loading
+
+    }
+
+    private fun proceedGeocoderResult(
+        location: MyLocation?, errorStatusDomain: ErrorStatusDomain?
+    ) {
+
+        when (errorStatusDomain) {
+            ErrorStatusDomain.NO_CONNECTION, ErrorStatusDomain.ERROR_OCCURRED -> {
+                locationState.value = LocationState.Error
+            }
+
+            null -> {
+                val areaFilter = location?.area
+                val countryFilter = location?.country
+                if (areaFilter != null || countryFilter != null) {
+                    setAreaFilterUseCase.execute(areaFilter)
+                    if (countryFilter != null) {
+                        setCountryFilterUseCase.execute(countryFilter)
+                    }
+                    updateStates()
+                    locationState.value = LocationState.Success
+                } else locationState.value = LocationState.Error
+
+            }
+        }
+    }
+
+
+    fun locationAccessDenied() {
+        dialogState.value = DialogState.ShowDialog
+    }
+
+    fun openAppsSettings() {
+        openAppsSettingsUseCase.execute()
     }
 
     private fun setButtonsStates(isTempFiltersNotEmpty: Boolean) {

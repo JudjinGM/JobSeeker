@@ -19,7 +19,7 @@ import ru.practicum.android.diploma.search.ui.model.ErrorStatusUi
 class FilteringAreaViewModel(
     private val parentId: String?,
     private val getRegionsUseCase: GetAreasUseCase,
-    private val areaFilterDomainToRegionCountryUiConverter: AreaFilterDomainToRegionCountryUiConverter
+    private val areaFilterDomainToRegionCountryUiConverter: AreaFilterDomainToRegionCountryUiConverter,
 ) : ViewModel() {
 
     private val stateLiveData = MutableLiveData<AreasState>()
