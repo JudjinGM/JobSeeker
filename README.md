@@ -38,7 +38,7 @@ Add vacancies to favorites. Explore your favorite vacancies:
 
 <img src="https://github.com/JudjinGM/JobSeeker/blob/dev/info/favorites_screen.gif" width=30% height=30%>
 
-### Vacancies
+### Vacancy details
 Explore vacancies detail information:
 
 <img src="https://github.com/JudjinGM/JobSeeker/blob/dev/info/vacancy_screen.gif" width=30% height=30%>
