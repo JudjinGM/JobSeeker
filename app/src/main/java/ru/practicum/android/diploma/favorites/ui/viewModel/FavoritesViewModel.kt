@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.practicum.android.diploma.common.ui.mapper.VacancyDomainToVacancyUiConverter
 import ru.practicum.android.diploma.favorites.domain.FavoritesState
@@ -17,6 +18,8 @@ class FavoritesViewModel(
 ) : ViewModel() {
     private val _stateLiveData = MutableLiveData<FavoritesState>()
     fun stateLiveData(): LiveData<FavoritesState> = _stateLiveData
+
+    private var isClickAllowed = true
 
     private val coroutineExceptionHandler =
         CoroutineExceptionHandler { _, _ -> _stateLiveData.postValue(FavoritesState.Error) }
@@ -38,5 +41,21 @@ class FavoritesViewModel(
                 }
             }
         }
+    }
+
+    fun isClickDebounce(): Boolean {
+        val current = isClickAllowed
+        if (isClickAllowed) {
+            isClickAllowed = false
+            viewModelScope.launch {
+                delay(CLICK_DEBOUNCE_DELAY_MILLIS)
+                isClickAllowed = true
+            }
+        }
+        return current
+    }
+
+    companion object {
+        private const val CLICK_DEBOUNCE_DELAY_MILLIS = 1000L
     }
 }

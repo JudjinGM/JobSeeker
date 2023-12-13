@@ -1,5 +1,6 @@
 package ru.practicum.android.diploma.filter.ui.model
 
+import ru.practicum.android.diploma.common.domain.model.filter_models.AreaFilter
 import ru.practicum.android.diploma.search.ui.model.ErrorStatusUi
 
 sealed interface AreasState {
@@ -15,4 +16,8 @@ sealed interface AreasState {
         val errorStatus: ErrorStatusUi
     ) : AreasState
 
+    sealed interface Navigate : AreasState {
+        class NavigateWithContent(val areaFilter: AreaFilter) : Navigate
+        object NavigateEmpty : Navigate
+    }
 }

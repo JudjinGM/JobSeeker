@@ -27,9 +27,7 @@ class RecycleViewAreaAdapter(
         )
     }
 
-    override fun getItemCount(): Int {
-        return items.size
-    }
+    override fun getItemCount(): Int = items.size
 
     override fun onBindViewHolder(holder: AreaCountryViewHolder, position: Int) {
         holder.bind(items[position])

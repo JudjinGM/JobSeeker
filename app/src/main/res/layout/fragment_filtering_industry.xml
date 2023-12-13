@@ -40,6 +40,7 @@
             android:layout_gravity="end|center"
             android:layout_marginStart="@dimen/padding_horizontal"
             android:src="@drawable/ic_search"
+            app:tint="@color/black_universal"
             android:contentDescription="@string/type_a_sector" />
     </FrameLayout>
 

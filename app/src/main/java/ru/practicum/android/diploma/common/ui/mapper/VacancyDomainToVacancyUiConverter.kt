@@ -39,18 +39,17 @@ class VacancyDomainToVacancyUiConverter(private val context: Context) {
     }
 
     private fun mapSalaryCurrency(salary: Salary?): String {
-        return if (salary?.currency == null) ""
-        else when {
-            salary.currency.contains("AZN") -> {context.getString(R.string.AZN)}
-            salary.currency.contains("BYR") -> {context.getString(R.string.BYR)}
-            salary.currency.contains("EUR") -> {context.getString(R.string.EUR)}
-            salary.currency.contains("GEL") -> {context.getString(R.string.GEL)}
-            salary.currency.contains("KGS") -> {context.getString(R.string.KGT)}
-            salary.currency.contains("KZT") -> {context.getString(R.string.KZT)}
-            salary.currency.contains("RUR") -> {context.getString(R.string.RUB)}
-            salary.currency.contains("UAH") -> {context.getString(R.string.UAH)}
-            salary.currency.contains("USD") -> {context.getString(R.string.USD)}
-            salary.currency.contains("UZS") -> {context.getString(R.string.UZS)}
+        return when {
+            salary?.currency?.contains("AZN") == true -> {context.getString(R.string.AZN)}
+            salary?.currency?.contains("BYR") == true -> {context.getString(R.string.BYR)}
+            salary?.currency?.contains("EUR") == true -> {context.getString(R.string.EUR)}
+            salary?.currency?.contains("GEL") == true -> {context.getString(R.string.GEL)}
+            salary?.currency?.contains("KGS") == true -> {context.getString(R.string.KGT)}
+            salary?.currency?.contains("KZT") == true -> {context.getString(R.string.KZT)}
+            salary?.currency?.contains("RUR") == true -> {context.getString(R.string.RUB)}
+            salary?.currency?.contains("UAH") == true -> {context.getString(R.string.UAH)}
+            salary?.currency?.contains("USD") == true -> {context.getString(R.string.USD)}
+            salary?.currency?.contains("UZS") == true -> {context.getString(R.string.UZS)}
             else -> ""
             }
     }

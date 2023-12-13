@@ -26,15 +26,12 @@ class RecycleViewVacancyAdapter(
         )
     }
 
-    override fun getItemCount(): Int {
-        return items.size
-    }
+    override fun getItemCount(): Int = items.size
 
     override fun onBindViewHolder(holder: VacancyViewHolder, position: Int) {
         holder.bind(items[position])
         holder.itemView.setOnClickListener {
             clickListener(items[holder.adapterPosition])
         }
-
     }
 }

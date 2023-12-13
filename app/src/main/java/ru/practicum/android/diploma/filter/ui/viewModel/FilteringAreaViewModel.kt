@@ -12,7 +12,6 @@ import ru.practicum.android.diploma.common.util.debounce
 import ru.practicum.android.diploma.filter.domain.useCase.GetAreasUseCase
 import ru.practicum.android.diploma.filter.ui.mapper.AreaFilterDomainToRegionCountryUiConverter
 import ru.practicum.android.diploma.filter.ui.model.AreaCountryUi
-import ru.practicum.android.diploma.filter.ui.model.AreaNavigationState
 import ru.practicum.android.diploma.filter.ui.model.AreasState
 import ru.practicum.android.diploma.search.domain.model.ErrorStatusDomain
 import ru.practicum.android.diploma.search.ui.model.ErrorStatusUi
@@ -20,15 +19,13 @@ import ru.practicum.android.diploma.search.ui.model.ErrorStatusUi
 class FilteringAreaViewModel(
     private val parentId: String?,
     private val getRegionsUseCase: GetAreasUseCase,
-    private val areaFilterDomainToRegionCountryUiConverter: AreaFilterDomainToRegionCountryUiConverter
+    private val areaFilterDomainToRegionCountryUiConverter: AreaFilterDomainToRegionCountryUiConverter,
 ) : ViewModel() {
 
     private val stateLiveData = MutableLiveData<AreasState>()
-    private val navigationStateLiveData = MutableLiveData<AreaNavigationState>()
-
     private val areasListUi = mutableListOf<AreaCountryUi>()
-
     private val foundAreasList = mutableListOf<AreaFilter>()
+
     private val coroutineExceptionHandler =
         CoroutineExceptionHandler { _, _ -> setState(AreasState.Error(ErrorStatusUi.ERROR_OCCURRED)) }
 
@@ -38,13 +35,9 @@ class FilteringAreaViewModel(
         }
 
     private var latestSearchText: String? = null
+    private var isClickAllowed = true
 
     fun observeStateLiveData(): LiveData<AreasState> = stateLiveData
-    fun observeNavigationStateLiveData(): LiveData<AreaNavigationState> = navigationStateLiveData
-    private fun setState(state: AreasState) {
-        stateLiveData.value = state
-    }
-
     init {
         setState(AreasState.Loading)
         viewModelScope.launch(coroutineExceptionHandler) {
@@ -52,6 +45,30 @@ class FilteringAreaViewModel(
                 proceedResult(pair.first, pair.second)
             }
         }
+    }
+
+    fun searchAreaDebounce(changedText: String) {
+        if (changedText == latestSearchText) {
+            return
+        }
+        latestSearchText = changedText
+        searchDebounce(changedText)
+    }
+
+    fun areaClicked(areaId: Int) {
+        if (isClickDebounce()) {
+            val area = foundAreasList.find { areaFilter -> areaFilter.id == areaId }
+            stateLiveData.value =
+                area?.let { AreasState.Navigate.NavigateWithContent(it) }
+        }
+    }
+
+    fun proceedBack() {
+        stateLiveData.value = AreasState.Navigate.NavigateEmpty
+    }
+
+    private fun setState(state: AreasState) {
+        stateLiveData.value = state
     }
 
     private fun proceedResult(areas: Areas?, errorStatusDomain: ErrorStatusDomain?) {
@@ -74,14 +91,6 @@ class FilteringAreaViewModel(
         }
     }
 
-    fun searchAreaDebounce(changedText: String) {
-        if (changedText == latestSearchText) {
-            return
-        }
-        latestSearchText = changedText
-        searchDebounce(changedText)
-    }
-
     private fun searchAreaInAreasListUi(query: String) {
         if (query.isBlank()) {
             setState(AreasState.Success.Content(areasListUi))
@@ -98,16 +107,21 @@ class FilteringAreaViewModel(
         }
     }
 
-    fun areaClicked(areaId: Int) {
-        val area = foundAreasList.find { areaFilter -> areaFilter.id == areaId }
-        navigationStateLiveData.value = area?.let { AreaNavigationState.NavigateWithContent(it) }
-    }
+    private fun isClickDebounce(): Boolean {
+        val current = isClickAllowed
+        if (isClickAllowed) {
+            isClickAllowed = false
 
-    fun proceedBack() {
-        navigationStateLiveData.value = AreaNavigationState.NavigateEmpty
+            viewModelScope.launch {
+                CLICK_DEBOUNCE_DELAY_MILLIS
+                isClickAllowed = true
+            }
+        }
+        return current
     }
 
     companion object {
         private const val SEARCH_DEBOUNCE_DELAY_MILLIS = 500L
+        private const val CLICK_DEBOUNCE_DELAY_MILLIS = 1000L
     }
 }

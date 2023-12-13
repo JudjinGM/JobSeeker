@@ -28,8 +28,14 @@ class SimilarVacancyViewModel(
         searchSimilarVacancyById(vacancyId)
     }
 
+    override fun onLastItemReached() {
+        if (isPaginationDebounce()) {
+            searchSameRequest(vacancyId)
+        }
+    }
+
     private fun searchSimilarVacancyById(vacancyId: Int) {
-        setState(SearchState.Loading.LoadingSearch)
+        setState(SearchState.Loading.LoadingNewSearch(isFilterExist = false))
 
         nextPage = DEFAULT_PAGE
         viewModelScope.launch {
@@ -38,16 +44,12 @@ class SimilarVacancyViewModel(
         nextPage++
     }
 
-    override fun onLastItemReached() {
-        searchSameRequest(vacancyId)
-    }
-
     private fun searchSameRequest(vacancyId: Int) {
         if (currentPages == maxPages || currentPages == PAGE_LIMIT || isNextPageLoading) {
             return
         }
         isNextPageLoading = true
-        setPaginationLoadingState(true)
+        setState(SearchState.Loading.LoadingPaginationSearch)
 
         if (PAGE_LIMIT - currentPages <= DEFAULT_PER_PAGE) {
             perPage = PAGE_LIMIT - currentPages

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.practicum.android.diploma.common.domain.model.filter_models.Industries
 import ru.practicum.android.diploma.common.domain.model.filter_models.IndustryFilter
@@ -13,13 +14,10 @@ import ru.practicum.android.diploma.filter.domain.useCase.GetChosenIndustryUseCa
 import ru.practicum.android.diploma.filter.domain.useCase.GetIndustriesUseCase
 import ru.practicum.android.diploma.filter.domain.useCase.SetIndustryFilterUseCase
 import ru.practicum.android.diploma.filter.ui.mapper.IndustryFilterDomainToIndustryUiConverter
-import ru.practicum.android.diploma.filter.ui.model.ButtonState
-import ru.practicum.android.diploma.filter.ui.model.IndustryNavigationState
 import ru.practicum.android.diploma.filter.ui.model.IndustryState
 import ru.practicum.android.diploma.filter.ui.model.IndustryUi
 import ru.practicum.android.diploma.search.domain.model.ErrorStatusDomain
 import ru.practicum.android.diploma.search.ui.model.ErrorStatusUi
-import ru.practicum.android.diploma.search.ui.model.SingleLiveEvent
 
 class FilteringIndustryViewModel(
     private val getIndustriesUseCase: GetIndustriesUseCase,
@@ -29,12 +27,11 @@ class FilteringIndustryViewModel(
 ) : ViewModel() {
 
     private val stateLiveData = MutableLiveData<IndustryState>()
-    private val navigationStateLiveData = MutableLiveData<IndustryNavigationState>()
-    private val buttonStateLiveData = MutableLiveData<ButtonState>(ButtonState.Gone)
-    private val recycleViewScrollState = SingleLiveEvent<Int>()
     private val industriesListUi = mutableListOf<IndustryUi>()
     private var industry: IndustryFilter? = null
     private val foundIndustriesList = mutableListOf<IndustryFilter>()
+
+    private var isClickAllowed = true
 
     private val coroutineExceptionHandler =
         CoroutineExceptionHandler { _, _ ->
@@ -62,13 +59,6 @@ class FilteringIndustryViewModel(
 
     fun observeStateLiveData(): LiveData<IndustryState> = stateLiveData
 
-    fun observeNavigationStateLiveData(): LiveData<IndustryNavigationState> =
-        navigationStateLiveData
-
-    fun observeButtonStateLiveData(): LiveData<ButtonState> = buttonStateLiveData
-
-    fun observeRecycleViewScrollState(): LiveData<Int> = recycleViewScrollState
-
     fun searchIndustryDebounce(changedText: String) {
         if (changedText == latestSearchText) {
             return
@@ -79,42 +69,61 @@ class FilteringIndustryViewModel(
 
     private fun searchIndustry(query: String) {
         if (query.isBlank()) {
-            setState(IndustryState.Success.Content(industriesListUi))
+            setState(
+                IndustryState.Success.Content(
+                    industryList = industriesListUi,
+                    chosenIndustryPosition = scrollPosition(),
+                    isIndustryChosen = isIndustryChosen()
+                )
+            )
         } else {
             val filteredIndustries = industriesListUi.filter {
                 it.name.contains(query, ignoreCase = true)
             }
             if (filteredIndustries.isNotEmpty()) {
-                setState(IndustryState.Success.Content(filteredIndustries))
-                setButtonStateVisibilityWithCondition()
+                setState(
+                    IndustryState.Success.Content(
+                        industryList = filteredIndustries,
+                        chosenIndustryPosition = scrollPosition(),
+                        isIndustryChosen = isIndustryChosen()
+                    )
+                )
             } else {
                 setState(IndustryState.Error(ErrorStatusUi.NOTHING_FOUND))
-                setButtonState(ButtonState.Gone)
             }
         }
     }
 
     fun industryClicked(industryId: Int) {
-        val currentList = (stateLiveData.value as? IndustryState.Success.Content)?.industryList
-        val list = currentList?.map { industryUi ->
-            industryUi.copy(isSelected = industryUi.id == industryId)
-        }
-        if (list != null) {
-            setState(IndustryState.Success.Content(list))
-        }
+        if (isClickDebounce()) {
+            val currentList = (stateLiveData.value as? IndustryState.Success.Content)?.industryList
+            val list = currentList?.map { industryUi ->
+                industryUi.copy(isSelected = industryUi.id == industryId)
+            }
+            industry = foundIndustriesList.find { it.id == industryId }
 
-        industry = foundIndustriesList.find { it.id == industryId }
-        setButtonStateVisibilityWithCondition()
-        industriesListUi.forEach {
-            it.isSelected = it.id == industryId
+            if (list != null) {
+                setState(
+                    IndustryState.Success.Content(
+                        industryList = list,
+                        chosenIndustryPosition = scrollPosition(),
+                        isIndustryChosen = isIndustryChosen()
+                    )
+                )
+            }
+            industriesListUi.forEach {
+                it.isSelected = it.id == industryId
+            }
         }
     }
 
     fun chooseButtonClicked() {
-        if (industry != null) {
-            setNavigationState(IndustryNavigationState.NavigateWithContent(industry))
-        } else {
-            navigationStateLiveData.value = IndustryNavigationState.NavigateEmpty
+        if (isClickDebounce()) {
+            if (industry != null) {
+                setState(IndustryState.Navigate.NavigateWithContent(industry))
+            } else {
+                setState(IndustryState.Navigate.NavigateEmpty)
+            }
         }
     }
 
@@ -123,7 +132,9 @@ class FilteringIndustryViewModel(
     }
 
     fun proceedBack() {
-        navigationStateLiveData.value = IndustryNavigationState.NavigateEmpty
+        if (isClickDebounce()) {
+            stateLiveData.value = IndustryState.Navigate.NavigateEmpty
+        }
     }
 
     private fun proceedResult(industries: Industries?, errorStatusDomain: ErrorStatusDomain?) {
@@ -131,22 +142,23 @@ class FilteringIndustryViewModel(
         when (errorStatusDomain) {
             ErrorStatusDomain.NO_CONNECTION -> {
                 setState(IndustryState.Error(ErrorStatusUi.NO_CONNECTION))
-                setButtonState(ButtonState.Gone)
             }
 
             ErrorStatusDomain.ERROR_OCCURRED -> {
                 setState(IndustryState.Error(ErrorStatusUi.ERROR_OCCURRED))
-                setButtonState(ButtonState.Gone)
             }
 
             null -> {
                 if (industriesListUi.isEmpty()) {
                     setState(IndustryState.Error(ErrorStatusUi.NOTHING_FOUND))
-                    setButtonState(ButtonState.Gone)
                 } else {
-                    setState(IndustryState.Success.Content(industriesListUi))
-                    setButtonStateVisibilityWithCondition()
-                    setScrollState()
+                    setState(
+                        IndustryState.Success.Content(
+                            industriesListUi,
+                            chosenIndustryPosition = scrollPosition(),
+                            isIndustryChosen = isIndustryChosen()
+                        )
+                    )
                 }
             }
         }
@@ -166,32 +178,29 @@ class FilteringIndustryViewModel(
         }
     }
 
-    private fun setScrollState() {
-        val id = industry?.id ?: 0
-        recycleViewScrollState.value = id
-    }
+    private fun scrollPosition() = industry?.id ?: 0
+
+    private fun isIndustryChosen() = industry != null
 
     private fun setState(state: IndustryState) {
         stateLiveData.value = state
     }
 
-    private fun setButtonState(state: ButtonState) {
-        buttonStateLiveData.value = state
-    }
+    private fun isClickDebounce(): Boolean {
+        val current = isClickAllowed
+        if (isClickAllowed) {
+            isClickAllowed = false
 
-    private fun setNavigationState(state: IndustryNavigationState) {
-        navigationStateLiveData.value = state
-    }
-
-    private fun setButtonStateVisibilityWithCondition() {
-        if (industry != null) {
-            setButtonState(ButtonState.Visible)
-        } else {
-            setButtonState(ButtonState.Gone)
+            viewModelScope.launch {
+                delay(CLICK_DEBOUNCE_DELAY_MILLIS)
+                isClickAllowed = true
+            }
         }
+        return current
     }
 
     companion object {
         private const val SEARCH_DEBOUNCE_DELAY_MILLIS = 500L
+        private const val CLICK_DEBOUNCE_DELAY_MILLIS = 200L
     }
 }
